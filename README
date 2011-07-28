@@ -1,0 +1,12 @@
+Tricky Solution to Problem, or tsp, is a solver for the Travelling Salesman
+Problem, or tsp, for the KTH course on Advanced Algorithms.
+
+Course home page: http://www.csc.kth.se/utbildning/kth/kurser/DD2440/
+2011 home page: http://www.csc.kth.se/utbildning/kth/kurser/DD2440/avalg11/
+
+Problem specification: https://kattis.csc.kth.se/problem?id=tsp
+
+Possibly used implementation paper:
+http://www.akira.ruc.dk/~keld/research/LKH/LKH-1.3/DOC/LKH_REPORT.pdf
+
+TODO: Add description of algorithm used.
