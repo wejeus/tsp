@@ -1,6 +1,6 @@
 SRC=tsp.c
 OBJ=${SRC:.c=.o}
-CFLAGS+=-Wall -pedantic -std=c99
+CFLAGS+=-Wall -pedantic -std=c99 -g
 CC=gcc
 
 all: ${OBJ}
