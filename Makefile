@@ -12,3 +12,6 @@ all: ${OBJ}
 clean:
 	rm -f *.o tsp
 
+report: report.tex
+	pdflatex report.tex
+	pdflatex report.tex

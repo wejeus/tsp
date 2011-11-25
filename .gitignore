@@ -2,3 +2,6 @@
 *.o
 *.swp
 tsp
+*.pdf
+*.aux
+*.log
