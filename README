@@ -6,7 +6,13 @@ Course home page: http://www.csc.kth.se/utbildning/kth/kurser/DD2440/
 
 Problem specification: https://kattis.csc.kth.se/problem?id=tsp
 
-Possibly used implementation paper:
-http://www.akira.ruc.dk/~keld/research/LKH/LKH-1.3/DOC/LKH_REPORT.pdf
+Possibly used implementation paper/sources:
+* http://www.akira.ruc.dk/~keld/research/LKH/LKH-1.3/DOC/LKH_REPORT.pdf
+* http://www-e.uni-magdeburg.de/mertens/TSP/
+* http://www.ida.liu.se/~TDDB19/reports_2003/htsp.pdf
+* http://www.hackchina.com/en/r/182415/TSP.C__html
+* http://isd.ktu.lt/it2011//material/Proceedings/1_AI_5.pdf
+* http://code.google.com/p/skidmore-vega/source/browse/trunk/VEGA/src/vega/algorithms/tsp/TwoOpt.java?spec=svn107&r=106
 
 TODO: Add description of algorithm used.
+
