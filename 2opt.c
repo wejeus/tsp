@@ -175,7 +175,6 @@ int reverseEdges(tsp_graph_t *graph, node_t *aux[], directed_edge e1, directed_e
 
 			// Move backward by going forward =)
 			node = node->next;
-			printf("done.\n");
 			++rev_edges;
 		} else {
 			node->prev = last_prev;
