@@ -21,6 +21,37 @@
 \maketitle
 
 \section{Introduction}
+In the fields of computer science and mathematical optimization a well known problem is the \textit{tradelling salesman problem, or TSP}. The problem is often stated as follows: \textit{given a list of cities and their pairwise distances, find the shortest possible path that visit each city exactly once and then return to the start position}. It is easy to see how this can be transformed into a mathematical representation by using a graph. Each city is a node, let there be an edge from each city to every other city, each representing the distance between the two. The solution to the problem must then be an ordered subset of the edges with the constraints that two edges immediately following each other must end in a common vertex and there must be exactly $n$ vertices each occurring exactly once.
+
+It is well know that the TSP is NP-complete and we will not dwell on details only mention that no deterministic algorithm that finds an optimal solution currently exists, instead the most commonly used approach is to find some (possible bad) solution and then successively improve this solution until some halting criteria is met.
+\\\\
+TODO: MORE
+
+\section{Data structures}
+Bla bla bla 
+
+\subsection{Reversing edges}
+Using 2OPT algorithm we note that when two edges are exchanged (i.e a new connection between \textit{four} independent nodes is established) no matter how we create these new edges the result of the exchange will \textit{never} form a directed cycle. This is due to the fact that regardless of which edge we exchange for (and independently of direction) the result will always be exactly one node will have two edges directed towards it and exactly one node with two exiting edges, no assignment is possible. See figure below for illustration, note the directions of edges.
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics[width=0.90\linewidth]{rev_edge_graph.eps}
+	\end{center}
+	\caption{Exchanging edges}
+	\label{exchange}
+\end{figure}
+
+
+Looking at the graph this way we it is clear that we can divide it into two disjoint sets with the exchanged edges being the interconnection between the two. Since each half in itself is correctly directed to create a new directed graph of the union of the disjoint sets only one of the two sets needs to be reversed. A local optimization we investigated was if we where able to determine or at least approximate the size of each set we could make reversing edges more efficient by choosing the smaller set. 
+
+To calculate the size of any of the sets we must be able to determine its size for any node since the edges picked for exchange can be picked arbitrarily. This means the the only way to determine the size of the set is to traverse set linearly starting and stopping in any of the two nodes involved in the edge exchange. If we denote the size of a graph as $|N|$ and the size of the two disjoint sets as $|A|$ resp. $|B|$ we then know that $|B| = |N| - |A|$ this means that if we, while calculating the size for $A$, come to a point where $|A| > \frac{|N|}{2}$ we can conclude that $B$ is smaller and then reverse the edges of the set $B$. The problem with this approach is that if we while investigating the size of a set conclude that the \textit{other} set is smaller and reverse that set the result would be that we have visited $|N|$ nodes in total which is not desired. 
+
+The argument above also shows that no other approximation is possible and we further believe that the use of additional data structures to keep track of set size for various nodes is not possible due the fact that edges can be exchange at random as shown above.
+
+In our implementation we simply pick the set arbitrarily and reverse the edges of that set. Since the edges involved in the 2OPT exchange is picked at random and we pick one set out of two who's union forms the entire graph we state, without proof that the average size of the set picked will have have a size of $\frac{1}{2} \times |N|$.
+
+
+%Further things to note: pick node with 2 inclining edges, traverse until ingen utfallande edge finns = KLART med get settet behover nu bars reverse kant inblandad i exchange
 
 \begin{thebibliography}{9}
 
