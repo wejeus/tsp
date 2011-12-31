@@ -23,6 +23,7 @@ report: report.tex
 
 .PHONY: clean
 clean:
-	rm -f *.o tsp *dSYM
+	rm -fr *.o tsp *dSYM
+	rm -f report.aux report.log report.synctex.gz
 	
 

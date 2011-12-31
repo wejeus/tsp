@@ -6,3 +6,4 @@ tsp
 *.aux
 *.log
 *.gz
+*.dSYM/

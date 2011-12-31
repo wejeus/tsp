@@ -23,7 +23,7 @@ typedef struct node {
 
 typedef struct {
 	node_t *path; 		// LinkedList of nodes
-	int **matrix;			// Upper triangular matrix
+	int **matrix;			
 	int **nearest_neighbours;	// Sorted neighbour lists (ALWAYS IGNORE FIRST ENTRY (SELF))
 	int size;				// Number of vertrices (complete graph, num edges = size*size)
 } tsp_graph_t;
@@ -37,6 +37,7 @@ void printPath(tsp_graph_t *graph);
 void constructSequentialPath(tsp_graph_t *graph);
 node_t* findNode(node_t *aux[], int id);
 void printFullPath(node_t **node_ar, int size);
+void swap(tsp_graph_t *graph, node_t *n1, node_t *n2);
 
 size_t nthClosestNeighbour(tsp_graph_t *graph, size_t n); // gets 1st, 2nd, 3rd neighbour etc.
 
@@ -80,17 +81,13 @@ void fillNearestNeighbours(tsp_graph_t *graph)
 
 /**
  * Reads n points in the cartesian plane and store distances for each point to
- * every other point in a graph represented by an upper triangular matrix.
- * I.e (i->value, x->not used (undefined)):
- * i i i
- * x i i
- * x x i
+ * every other point in a graph represented by a matrix.
  */
 void readGraph(tsp_graph_t *graph) {
 	// Read number of entries that will follow and later parsed
 	int n;
 	scanf("%d", &n);
-	
+
 	pair *coordinates = malloc(n*sizeof(pair));
 	
 	// Read coorinates for points from stdin
@@ -106,6 +103,7 @@ void readGraph(tsp_graph_t *graph) {
 		graph->matrix[i] = malloc(n*sizeof(int));
 	}
 
+	
 	// Determine distance for each node to all other nodes
 	for(size_t i = 0; i < n; i++) {
 		for(size_t j = 0; j < n; j++) {
@@ -115,8 +113,9 @@ void readGraph(tsp_graph_t *graph) {
 		}
 	}
 
-	fillNearestNeighbours(graph);
-
+	constructSequentialPath(graph);
+	// fillNearestNeighbours(graph);
+	
 	free(coordinates);
 }
 
@@ -278,18 +277,55 @@ void m_free(tsp_graph_t *type) {
 	free(type);
 }
 
+/* 
+swaps edges between edge (n1, n1->next) and (n2, n2->next)
+giving (n1, n2), (n1->next, n2->next), or we have disjoint cycles 
+*/
+void swap(tsp_graph_t *graph, node_t *n1, node_t *n2) {
+	
+	node_t *tmpN1Next = n1->next;
+	node_t *tmpN2Next = n2->next;
+	
+	n1->next = NULL;
+	tmpN1Next->prev = NULL;	
+	n2->next = NULL;
+	tmpN2Next->prev = NULL;
+	
+	directed_edge e1, e2;
+
+	// Create new edge pair in such a way that one node has two inclining
+	// edges and one has none.
+	e1.from = n1->id;
+	e1.to = n2->id;
+	e2.from = tmpN2Next->id;
+	e2.to = tmpN1Next->id;
+	
+	printf("aux edges, E1: (%d->%d) E2: (%d->%d)\n", e1.from, e1.to, e2.from, e2.to);
+	
+	node_t **aux = malloc(4*sizeof(node_t*));	
+	aux[0] = n1;
+	aux[2] = tmpN1Next;
+	aux[1] = n2;
+	aux[3] = tmpN2Next;
+	
+	
+	int numrev = reverseEdges(graph, aux, e1, e2);
+	printf("Number of reversed edges was: %d\n", numrev);
+}
+
+
 int main(int argc, char *argv[]) {
-
+	
 	tsp_graph_t *graph = malloc(sizeof(tsp_graph_t));
+	
 	readGraph(graph);
-
+	
 	printEdgeMatrix(graph->matrix, graph->size);
 	puts("distance order");
-	printEdgeMatrix(graph->nearest_neighbours, graph->size);
-	constructSequentialPath(graph);
+	// printEdgeMatrix(graph->nearest_neighbours, graph->size);
 	printPath(graph);
 	
-	// Artificial edge exchange
+	// (only for debug) statically picks two edges and swaps them
 	node_t **node_ar = malloc(graph->size*sizeof(node_t*));
 	node_t *start = graph->path;
 	for (size_t i = 0; i < graph->size; ++i) {
@@ -297,25 +333,12 @@ int main(int argc, char *argv[]) {
 		graph->path = graph->path->next;
 	}
 	graph->path = start;
-	printFullPath(node_ar, graph->size);
 	
-	node_ar[0]->next = NULL;
-	node_ar[1]->prev = NULL;
-	node_ar[3]->next = NULL;
-	directed_edge e1 = {0,3};
-	directed_edge e2 = {4,1};
-	
-	node_t **aux = malloc(4*sizeof(node_t*));
-	aux[0] = node_ar[0];
-	aux[1] = node_ar[1];
-	aux[2] = node_ar[3];
-	aux[3] = node_ar[4];
-	int numrev = reverseEdges(graph, aux, e1, e2);
-	printf("Number of reversed edges was: %d\n", numrev);
-	
-	printFullPath(node_ar, graph->size);
-	
-	printPath(graph);
-	m_free(graph);
+		printFullPath(node_ar, graph->size);
+	swap(graph, node_ar[0], node_ar[3]);
+		printFullPath(node_ar, graph->size);
+		printPath(graph);
+
+	// m_free(graph);
 	exit(0);
 }
