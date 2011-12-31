@@ -1,14 +1,14 @@
 
-CFLAGS += -Wall -pedantic -std=c99 -g
+CFLAGS += -Wall -pedantic -std=c99 -g -lm
 #SOURCES = 
 OBJECTS = $(SOURCES:.c=.o)
-EXECUTABLE = app
+EXECUTABLE = tsp
 CC = gcc
 
 all: $(SOURCES) $(EXECUTABLE)
 	
-$(EXECUTABLE): $(OBJECTS) main.cpp
-	${CC} $(OBJECTS) main.cpp -o $(EXECUTABLE)
+$(EXECUTABLE): $(OBJECTS) 2opt.c
+	${CC} $(CFLAGS) $(OBJECTS) 2opt.c -o $(EXECUTABLE)
 
 .c.o:
 	${CC} $(CFLAGS) -c $< -o $@

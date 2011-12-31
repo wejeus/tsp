@@ -24,6 +24,7 @@ typedef struct node {
 typedef struct {
 	node_t *path; 		// LinkedList of nodes
 	int **matrix;			// Upper triangular matrix
+	int **nearest_neighbours;	// Sorted neighbour lists (ALWAYS IGNORE FIRST ENTRY (SELF))
 	int size;				// Number of vertrices (complete graph, num edges = size*size)
 } tsp_graph_t;
 	
@@ -37,11 +38,45 @@ void constructSequentialPath(tsp_graph_t *graph);
 node_t* findNode(node_t *aux[], int id);
 void printFullPath(node_t **node_ar, int size);
 
+size_t nthClosestNeighbour(tsp_graph_t *graph, size_t n); // gets 1st, 2nd, 3rd neighbour etc.
 
 
 /* Definitions ---------------------------------------------------------------------- */
 
 float sq(float f) { return f*f; }
+
+int graphDist(tsp_graph_t *graph, size_t from, size_t to)
+{
+		return graph->matrix[from][to];
+}
+
+tsp_graph_t *current_graph;
+size_t current_from;
+int distCompare(const void *a, const void *b)
+{
+	size_t a2 = *(size_t *) a;
+	size_t b2 = *(size_t *) b;
+
+	return graphDist(current_graph, current_from, a2) - graphDist(current_graph, current_from, b2);
+}
+
+void fillNearestNeighbours(tsp_graph_t *graph)
+{
+	size_t n = graph->size;
+	// Allocate multidim matrix
+	graph->nearest_neighbours = (int **) malloc(n*sizeof(int *));
+	for(size_t i = 0; i < n; ++i)
+		graph->nearest_neighbours[i] = (int *) malloc(n*sizeof(int));
+
+	current_graph = graph;
+	for(size_t i = 0; i < n; ++i)
+	{
+		for(size_t j = 0; j < n; ++j)
+			graph->nearest_neighbours[i][j] = j;
+		current_from = i;
+		qsort(graph->nearest_neighbours[i], graph->size, sizeof(int), &distCompare);
+	}
+}
 
 /**
  * Reads n points in the cartesian plane and store distances for each point to
@@ -80,6 +115,8 @@ void readGraph(tsp_graph_t *graph) {
 		}
 	}
 
+	fillNearestNeighbours(graph);
+
 	free(coordinates);
 }
 
@@ -105,7 +142,6 @@ void constructSequentialPath(tsp_graph_t *graph) {
 
 void printPath(tsp_graph_t *graph) {
 	node_t *current = graph->path;
-	int i = graph->size;
 	int length = 0;
 	for (size_t i = 0; i < graph->size; ++i) {
 		if (i != 0) {
@@ -233,7 +269,12 @@ void printEdgeMatrix(int **matrix, size_t n) {
 
 void m_free(tsp_graph_t *type) {
 	free(type->path);
+	for(size_t i = 0; i < type->size; ++i)
+		free(type->matrix[i]);
 	free(type->matrix);
+	for(size_t i = 0; i < type->size; ++i)
+		free(type->nearest_neighbours[i]);
+	free(type->nearest_neighbours);
 	free(type);
 }
 
@@ -243,6 +284,8 @@ int main(int argc, char *argv[]) {
 	readGraph(graph);
 
 	printEdgeMatrix(graph->matrix, graph->size);
+	puts("distance order");
+	printEdgeMatrix(graph->nearest_neighbours, graph->size);
 	constructSequentialPath(graph);
 	printPath(graph);
 	
@@ -271,6 +314,7 @@ int main(int argc, char *argv[]) {
 	printf("Number of reversed edges was: %d\n", numrev);
 	
 	printFullPath(node_ar, graph->size);
+	
 	printPath(graph);
 	m_free(graph);
 	exit(0);
