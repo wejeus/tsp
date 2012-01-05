@@ -7,8 +7,8 @@ CC = gcc
 
 all: $(SOURCES) $(EXECUTABLE)
 	
-$(EXECUTABLE): $(OBJECTS) 2opt.c
-	${CC} $(CFLAGS) $(OBJECTS) 2opt.c -o $(EXECUTABLE)
+$(EXECUTABLE): $(OBJECTS) tsp.c
+	${CC} $(CFLAGS) $(OBJECTS) tsp.c -o $(EXECUTABLE)
 
 .c.o:
 	${CC} $(CFLAGS) -c $< -o $@
