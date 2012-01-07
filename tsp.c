@@ -121,9 +121,8 @@ void print_kattis(graph g, size_t *tour)
 		printf("%d\n", tour[i]);
 }
 
-size_t *greedy_tsp(graph g)
+size_t *greedy_tsp(graph g, size_t *tour)
 {
-	size_t *tour = malloc(sizeof(size_t)*g.n);
 	bool used[g.n];
 	memset(used, 0, g.n*sizeof(bool));
 
@@ -195,6 +194,36 @@ void reverse(graph g, size_t *next_list, size_t from, size_t to)
 	}
 }
 
+void half_opt(graph g, size_t *next_list, size_t a)
+{
+	int gain = 0;
+	size_t best_j_prev;
+	size_t a_next = next_list[a];
+
+	for(size_t j_prev = a_next, j = next_list[j_prev], j_next = next_list[j]; next_list[j] != a; j_prev = j, j = j_next, j_next = next_list[j])
+	{
+		int new_gain = (graph_get_dist(g, a, a_next) + graph_get_dist(g, j_prev, j) + graph_get_dist(g, j, j_next))
+			- (graph_get_dist(g, a, j) + graph_get_dist(g, j, a_next) + graph_get_dist(g, j_prev, j_next));
+
+		if(new_gain > gain)
+		{
+			gain = new_gain;
+
+			best_j_prev = j_prev;
+		}
+	}
+	if(gain == 0)
+		return;
+
+	size_t j_prev = best_j_prev;
+	size_t j = next_list[j_prev];
+	size_t j_next = next_list[j];
+	next_list[j_prev] = j_next;
+	next_list[j] = a_next;
+	next_list[a] = j;
+}
+
+// swaps edges (a, a->next) and (b, b->next)
 void swap(graph g, size_t *next_list, size_t a, size_t b)
 {
 //	printf("swap(%d, %d)\n", a, b);
@@ -205,23 +234,62 @@ void swap(graph g, size_t *next_list, size_t a, size_t b)
 
 	reverse(g, next_list, a_next, b);
 	next_list[a_next] = b_next;
+	half_opt(g, next_list, a);
+	half_opt(g, next_list, b);
 }
 
-bool opt2(graph g, size_t *next_list)
+int k = 20;
+
+bool opt2(graph g, size_t *next_list, size_t i)
 {
-	for(size_t i = 0; i < g.n; ++i)
+	int gain = 0;
+	bool ret = false;
+	size_t a, b;
+
+	size_t end = i;
+
+	while(true)
 	{
-		for(size_t j = next_list[next_list[i]]; next_list[j] != i; j = next_list[j])
+		// check k neighbours
+		for(size_t n = 0; n <= k; ++n)
 		{
-			if(graph_get_dist(g, i, next_list[i]) + graph_get_dist(g, j, next_list[j])
-				> graph_get_dist(g, i, j) + graph_get_dist(g, next_list[i], next_list[j]))
+			size_t neigh = graph_get_neighbour(g, i, n);
+			if(neigh == next_list[i] || next_list[neigh] == i || neigh == i)
+				continue;
+			int new_gain = (graph_get_dist(g, i, next_list[i]) + graph_get_dist(g, neigh, next_list[neigh]))
+				- (graph_get_dist(g, i, neigh) + graph_get_dist(g, next_list[i], next_list[neigh]));
+			if(new_gain > gain)
 			{
-				swap(g, next_list, i, j);
-				return true;
+				gain = new_gain;
+
+				a = i;
+				b = neigh;
 			}
 		}
+		// total 2opt
+/*		for(size_t j = next_list[next_list[i]]; next_list[j] != i; j = next_list[j])
+		{
+			int new_gain = (graph_get_dist(g, i, next_list[i]) + graph_get_dist(g, j, next_list[j])) - (graph_get_dist(g, i, j) + graph_get_dist(g, next_list[i], next_list[j]));
+			if(new_gain > gain)
+			{
+				gain = new_gain;
+
+				a = i;
+				b = j;
+			}
+		}*/
+		if(gain != 0)
+		{
+			//printf("swap: a: %d, a_next: %d, b: %d, b_next: %d\n", a, next_list[a], b, next_list[b]);
+			swap(g, next_list, a, b);
+			gain = 0;
+			ret = true;
+		}
+		if(++i == g.n)
+			i = 0;
+		if(i == end)
+			return ret;
 	}
-	return false;
 }
 
 void solve_tsp(graph g, size_t *tour)
@@ -233,6 +301,8 @@ void solve_tsp(graph g, size_t *tour)
 	shuffle(tour, g.n);
 //	print_tour(g, tour);
 
+	greedy_tsp(g, tour);
+
 	size_t nexts[g.n];
 	for(size_t i = 0; i < g.n-1; ++i)
 	{
@@ -240,10 +310,18 @@ void solve_tsp(graph g, size_t *tour)
 	}
 	nexts[tour[g.n-1]] = tour[0];
 
-	for(int i = 0; i < 2000; ++i)
-		if(!opt2(g, nexts))
-			break;
-	//while(opt2(g, nexts));
+	//for(int i = 0; i < 100; ++i)
+	//	if(!opt2(g, nexts))
+	//		break;
+
+//	for(size_t i = 0; i < g.n; ++i)
+//		half_opt(g, nexts, i);
+
+	while(opt2(g, nexts, rand() % g.n));
+
+	for(size_t apa = 0; apa < 2; ++apa)
+	for(size_t i = 0; i < g.n; ++i)
+		half_opt(g, nexts, i);
 
 	// ll => tour
 	size_t next = 0;
@@ -268,6 +346,11 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+	// k neighbours can't be more than neighbours available
+	if(g.n-1 < k)
+		k = g.n-1;
+
+/*
 	fputs("[distance matrix]\n", stderr);
 	for(size_t i = 0; i < g.n; ++i)
 	{
@@ -282,9 +365,10 @@ int main(int argc, char *argv[])
 		for(size_t j = 0; j < g.n; ++j)
 			fprintf(stderr, "%3d ", graph_get_neighbour(g, i, j));
 		fputc('\n', stderr);
-	}
+	}*/
 
-	size_t *greedy = greedy_tsp(g);
+	size_t greedy[g.n];
+	greedy_tsp(g, greedy);
 	size_t *best = greedy;
 	fprintf(stderr, "\n[greedy tour]\n");
 	print_tour(g, greedy);
@@ -294,9 +378,9 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "\n[tours]\n");
 	for(size_t i = 0; i < 1; ++i)
 	{
-		solve_tsp(g, tour);
-		print_tour(g, tour);
-		if(tour_length(g, tour) < tour_length(g, best))
+		solve_tsp(g, tour_ptr);
+		print_tour(g, tour_ptr);
+		if(tour_length(g, tour_ptr) < tour_length(g, best))
 		{
 			size_t *tmp = best;
 			best = tour_ptr;
@@ -306,8 +390,7 @@ int main(int argc, char *argv[])
 
 	fprintf(stderr, "\n[kattis (best)]\n");
 	print_kattis(g, best);
-
-	free(greedy);
+	fprintf(stderr, "[kattis length: %d]\n", tour_length(g,best));
 
 	graph_free(g);
 
