@@ -33,7 +33,7 @@ static inline int graph_get_dist(graph g, size_t from, size_t to)
 	return g.dist[g.n*from + to];
 }
 
-static inline void graph_set_dist(graph g, size_t from, size_t to, short dist)
+static inline void graph_set_dist(graph g, size_t from, size_t to, int dist)
 {
 	g.dist[g.n*from + to] = dist;
 }
@@ -48,7 +48,7 @@ static inline int graph_get_neighbour(graph g, size_t from, size_t index)
 	return g.neighbours[g.n*from + index];
 }
 
-// bullshit
+// used to have a state-comparing qsort
 graph current_graph;
 size_t current_from;
 
@@ -120,6 +120,8 @@ void print_kattis(graph g, size_t *tour)
 	for(size_t i = 0; i < g.n; ++i)
 		printf("%d\n", tour[i]);
 }
+
+size_t *greedy_tour;
 
 size_t *greedy_tsp(graph g, size_t *tour)
 {
@@ -295,13 +297,13 @@ bool opt2(graph g, size_t *next_list, size_t i)
 void solve_tsp(graph g, size_t *tour)
 {
 //	fputs("\n", stderr);
-	for(size_t i = 0; i < g.n; ++i)
+/*	for(size_t i = 0; i < g.n; ++i)
 		tour[i] = i;
 
-	shuffle(tour, g.n);
+	shuffle(tour, g.n);*/
+	for(size_t i = 0; i < g.n; ++i)
+		tour[i] = greedy_tour[i];
 //	print_tour(g, tour);
-
-	greedy_tsp(g, tour);
 
 	size_t nexts[g.n];
 	for(size_t i = 0; i < g.n-1; ++i)
@@ -332,7 +334,6 @@ void solve_tsp(graph g, size_t *tour)
 		if(next == 0)
 			break;
 	}
-	
 }
 
 int main(int argc, char *argv[])
@@ -369,14 +370,18 @@ int main(int argc, char *argv[])
 
 	size_t greedy[g.n];
 	greedy_tsp(g, greedy);
-	size_t *best = greedy;
+	greedy_tour = greedy;
 	fprintf(stderr, "\n[greedy tour]\n");
 	print_tour(g, greedy);
 	size_t tour[g.n];
+	size_t tour2[g.n];
+	for(size_t i = 0; i < g.n; ++i)
+		tour2[i] = greedy[i];
 	size_t *tour_ptr = tour;
+	size_t *best = tour2;
 
 	fprintf(stderr, "\n[tours]\n");
-	for(size_t i = 0; i < 1; ++i)
+	for(size_t i = 0; i < 14; ++i)
 	{
 		solve_tsp(g, tour_ptr);
 		print_tour(g, tour_ptr);
