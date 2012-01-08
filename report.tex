@@ -23,10 +23,49 @@
 \section{Introduction}
 In the fields of computer science and mathematical optimization a well known problem is the \textit{tradelling salesman problem, or TSP}. The problem is often stated as follows: \textit{given a list of cities and their pairwise distances, find the shortest possible path that visit each city exactly once and then return to the start position}. It is easy to see how this can be transformed into a mathematical representation by using a graph. Each city is a node, let there be an edge from each city to every other city, each representing the distance between the two. The solution to the problem must then be an ordered subset of the edges with the constraints that two edges immediately following each other must end in a common vertex and there must be exactly $n$ vertices each occurring exactly once.
 
-It is well know that the TSP is NP-complete and we will not dwell on details only mention that no deterministic algorithm\footnote{Deterministic used in the sense of reduction based problem structure, i.e. no guarantee in correctness of subproblems.} that finds an optimal solution currently exists, instead the most commonly used approach is to find some (possible bad) solution and then successively improve this solution until some halting criteria is met.
+It is well know that the TSP is NP-complete and we will not dwell on details only mention that no deterministic algorithm \footnote{Deterministic used in the sense of reduction based problem structure, i.e. no guarantee in correctness of subproblems.} that finds an optimal solution currently exists, instead the most commonly used approach is to find some (possible bad) solution and then successively improve this solution until some halting criteria is met.
+
+This report only touches the Euclidean TSP, some methods proposed may not be usable, on general-case TSP.
+
+\section{Held-Karp Lower bound}
+
+As finding optimal results is very hard (so long as NP isn't within P), we can't expect to find optimal results within polynomial time. In order to measure how good an algorithm is, we can use a lower bound for a TSP tour which can be found in polynomial time. A common way of doing this is the Held-Karp (HK) lower bound. This bound seems to average about 0.8\% below the optimal tour length, but is only guaranteed to be within 2/3 of the optimal tour. 
+
+Also, it's not feasible to construct this lower bound exactly for large tours, for which an iterative version, which keeps close to the HK bound, is proposed to be used instead. Both of these methods however were not of very great use to us, as we'd measure our algorithms directly on Kattis' data. It's noteworthy however, because it provides some kind of measure, and can in some way say how far a solution is from the actual one.
 
 \section{Tour construction}
-TODO
+
+As the given problem is NP-hard, computing an exact solution for the tour isn't really to hope for. Exact solutions for the travelling-salesman problem can be found with dynamic programming in $O(2^n)$ time with inclusion-exclusion (Karp 1982).
+
+This isn't usable for us, as we need to construct tours within polynomial time. Our approach will be to construct a tour ``quickly'' and attempt local optimizations. There are a few different we could use:
+
+\subsection{Random tour}
+
+Creating a random tour consists of simply shuffling the cities, which is $O(n)$, for us it wasn't very beneficial, and the locally-optimized degenerates from this algorithm were never as good as nearest-neighbour for instance. 
+
+\subsection{Nearest Neighbour}
+
+Perhaps the easiest non-naive tour construction algorithm, nearest neighbour starts in any city, and goes to the closest previously-unvisited city. After all cities are visited, the tour ends by going back to where we came from. This is the initial-tour algorithm we went with, it gave the best results after local optimizations.
+
+From each city, checking distance to all neighbours is $O(n)$, as there are $n$ cities considered, our total time will be $O(n^2)$.
+
+\subsection{Greedy}
+
+Similar to Kruskal's MST algorithm, we try to insert the smallest edge possible into a tour. No node (or city) may ever be at the end of two edges or have two outgoing edges. We must also avoid creating a cycle with less than $n$ edges.
+
+We sort the edges, and always select the shortest one, discarding ones which would violate above criterion. In order to avoid creating a cycle in the above construction, we use an union-find structure, to assert that the edges join two disjoint sets.
+
+Experimentally, we found the greedy algorithm to work better than nearest neighbour in some cases, and worse in other. We heard that this algorithm was supposed to perform better than nearest-neighbour, but when uploading to Kattis, our testing framework, this algorithm actually gave a worse result. This may be in conjunction with how we perform our local optimizations etc. This initial tour seems to make our algorithm stuck in a worse local maxima.
+
+\subsection{Other tour construction algorithms}
+
+Several other tour-construction algorithms exist, but were not attempted by us, due to a lack of time. They're good to mention though, future work could consider them as candidates for starting points.
+
+Insertion heuristics start by a subtour and insert other cities into them. Nearest-insertion works by choosing the shortest edge, and making a subtour of it, then insert the cities closest to one of the cities in the tour, and insert it. Repeat until finished. Convex-hull works by finding the convex hull of all the cities, and inserting all other cities into it iteratively, as cheap as possible.
+
+Variants of Christofides' algorithms works by forming minimal spanning trees from the cities. They guarantee a good worst-case ratio, and might be quick enough to use.
+
+We don't know how these tour-construction algorithms are affected by the local-optimization algorithms, they could provide both a better, or worse, local maxima, depending on methods used.
 
 \section{Local optimization}
 After arguing how to find the best possible starting tour we now look at how this tour can be improved further. Methods used typically builds on techniques to reconstruct the tour by making path changes. The more popular methods is \textit{2OPT, 3OPT} and \textit{Lin-Kernighan}. Starting with the foremost, in 2OPT we try to find a better tour by successively testing if an exchange of two edges at a time would result in an improvement of tour cost, if so perform the exchange and continue with an other two pair of nodes.
@@ -39,8 +78,6 @@ All three local optimization procedures given above have different aspects and p
 
 %% is this correct? =)
 Most important to us we deemed to be time. This due to how the judging is structured on \textit{Kattis}. We sacrifice some improvement in tour cost to instead be able to run more test and in that way (hopefully) score more points. Our final choice was 2OPT.
-
-
 
 \subsection{Reversing edges}
 Using 2OPT algorithm we note that when two edges are exchanged (i.e a new connection between \textit{four} independent nodes is established) no matter how we create these new edges the result of the exchange will \textit{never} form a directed cycle. This is due to the fact that regardless of which edge we exchange for (and independently of direction) the result will always be exactly one node will have two edges directed towards it and exactly one node with two exiting edges, no other assignment is possible. See figure below for illustration, note the directions of edges.
@@ -65,12 +102,23 @@ In our implementation we simply pick the set arbitrarily and reverse the edges o
 
 %Further things to note: pick node with 2 inclining edges, traverse until ingen utfallande edge finns = KLART med get settet behover nu bars reverse kant inblandad i exchange
 
+\section{Repeated iterations}
+
+As with any (likely) polynomial solution to this problem, we're going to get stuck in a local maxima. By using non-deterministic iteration order to either tour-construction algorithms or our locally optimizing algorithms, we should (and experimentally do) get stuck in different maximas. Repeating the tour-generation process will then generate more solutions. If we choose the best of more constructed tours, we're likely to get a better result on average. This was very successful for us, and we managed to score a few more points off of it simply by having a random starting point for the 2-opt step.
+
+We'd recommend trying different initial tours as well, as greedy shown to be better in some cases where nearest neighbour didn't. This wasn't something that we had time to implement however, but it could prove valuable.
+
 \begin{thebibliography}{9}
 
 \bibitem{localopt}
 	D. Johnson and L. McGeoch,
 	\emph{The Traveling Salesman Problem: A Case Study in Local Optimization. in Local Search in Combinatorial Optimization}.
 	E. H. L. Aarts and J. K. Lenstra (eds), John Wiley and Sons, Ltd., 1997, pp. 215-310. http://www2.research.att.com/~dsj/papers.html
+
+\bibitem{kattis}
+	Kattis
+	\emph{Travelling Salesperson 2D}
+	https://kth.kattis.scrool.se/problems/oldkattis:tsp
 
 \end{thebibliography}
 
