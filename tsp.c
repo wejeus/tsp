@@ -321,7 +321,13 @@ void solve_tsp(graph g, size_t *tour)
 
 	while(opt2(g, nexts, rand() % g.n));
 
-	for(size_t apa = 0; apa < 2; ++apa)
+//	for(size_t apa = 0; apa < 2; ++apa)
+	for(size_t i = 0; i < g.n; ++i)
+		half_opt(g, nexts, i);
+
+	while(opt2(g, nexts, rand() % g.n));
+
+//	for(size_t apa = 0; apa < 2; ++apa)
 	for(size_t i = 0; i < g.n; ++i)
 		half_opt(g, nexts, i);
 
