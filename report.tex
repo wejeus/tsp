@@ -70,14 +70,22 @@ We don't know how these tour-construction algorithms are affected by the local-o
 \section{Local optimization}
 After arguing how to find the best possible starting tour we now look at how this tour can be improved further. Methods used typically builds on techniques to reconstruct the tour by making path changes. The more popular methods is \textit{2OPT, 3OPT} and \textit{Lin-Kernighan}. Starting with the foremost, in 2OPT we try to find a better tour by successively testing if an exchange of two edges at a time would result in an improvement of tour cost, if so perform the exchange and continue with an other two pair of nodes.
 
-Regarding 3OPT and Lin-Kernighan, or LK for short, both can be seen as extensions of 2OPT - building on the same idea of edge exchange where in 3OPT you test three edges at a time and LK can be seen as a generalization to $n$ edge exchanges at a time.
+Regarding 3OPT and Lin-Kernighan, or LK for short, both can be seen as extensions of 2OPT - building on the same idea of edge exchange where in 3OPT you test three edges at a time and LK can be seen as a generalization to $n$ edges but the actual edges exchanged varies at each iteration.
 
 The variation in how many edges are exchanged at one time gives the various techniques different characteristics, namely difference in running time and cost of total tour found. The difference in tour cost is obviously expected since they are all \textit{local} optimization techniques and no guarantee exists that any local improvement actually is a part of any global \textit{optimal} solution (side note: this is what we refer to by \textit{non-determenistic} in the introduction, see footnote 1).
 
-All three local optimization procedures given above have different aspects and properties that make the unique. From results given in \cite{localopt} we see that a higher running, on average, normally produces a better tour cost. As an example taken from \cite{localopt}, the difference in running time between LK and 2OPT on an input size of $10^6$ is 2650 vs 940 seconds and the average excess over Held-Karp lower bound is 2.0 vs 4.9 in favor of LK. But if running time is of more importance the higher tour cost might be acceptable. This shows that there is no clear definition of \textit{"best"} approach for local optimization instead its up to the needs of the context. 
+All three local optimization procedures given above have different aspects and properties that make the unique. From results given in \cite{localopt} we see that a higher running, on average, normally produces a better tour cost. As an example taken from \cite{localopt}, the difference in running time between LK and 2OPT on an input size of $10^6$ is 2650(LK) vs 940(2OPT) seconds and the average excess over Held-Karp lower bound is 2.0 vs 4.9 in favor of LK. But if running time is of more importance the higher tour cost might be acceptable. This shows that there is no clear definition of \textit{"best"} approach for local optimization instead its up to the needs of the context. 
 
-%% is this correct? =)
-Most important to us we deemed to be time. This due to how the judging is structured on \textit{Kattis}. We sacrifice some improvement in tour cost to instead be able to run more test and in that way (hopefully) score more points. Our final choice was 2OPT.
+Most important to us we deemed to be time. This due to how the judging is structured on \textit{Kattis}\cite{kattis}. We sacrifice some improvement in tour cost to instead be able to run more test and in that way (hopefully) score more points. Our final choice was 2OPT.
+
+\subsection{Local maxima/minima}
+When performing a local optimization we need to start the procedure at some point. The choice of start point can pose an impact on the quality of the total tour. This is due to the fact that, depending on start point, it is possible for the algorithm used to hit different local maxima/minima in varied order which in turn can affect other local maxima/minima given various results.
+
+When referring to local maxima/minima we of course refer to the possible choice of exchanging edges. As an example a decision to exchange edge pair $x$ at time $T_0$ giving an intermediate result of $S$, now since our decision at $T_0$ we continue to $T_1$ \textit{with a reduced set of possible next action} due to the decision at $T_0$, if instead we would start at $T_1$ we would have a greater set of possible actions and, perhaps, one of those would give a result $\hat{S} > S$.
+
+A good start node would be one that avoids removing a local maxima/minima that would be a part of the optimal solution as a response of encountering some other maxima/minima. We where unable to find any theory to build or choice of "good" start node on and are highly doubtful that such a choice is possible due to the fact of NP-completeness of the TSP.
+
+We also note that the choice of initial start tour also could affect the end result using the same reasoning as above. Our solution was to do a local optimization several times, both by using different start points and by using different start tours (greedy and nearest neighbor) and then comparing the results.
 
 \subsection{Reversing edges}
 Using 2OPT algorithm we note that when two edges are exchanged (i.e a new connection between \textit{four} independent nodes is established) no matter how we create these new edges the result of the exchange will \textit{never} form a directed cycle. This is due to the fact that regardless of which edge we exchange for (and independently of direction) the result will always be exactly one node will have two edges directed towards it and exactly one node with two exiting edges, no other assignment is possible. See figure below for illustration, note the directions of edges.
@@ -99,8 +107,6 @@ The argument above also shows that no other approximation is possible and we fur
 
 In our implementation we simply pick the set arbitrarily and reverse the edges of that set. Since the edges involved in the 2OPT exchange is picked at random and we pick one set out of two who's union forms the entire graph we state, without proof that the average size of the set picked will have have a size of $\frac{1}{2} \times |N|$.
 
-
-%Further things to note: pick node with 2 inclining edges, traverse until ingen utfallande edge finns = KLART med get settet behover nu bars reverse kant inblandad i exchange
 
 \section{Repeated iterations}
 
