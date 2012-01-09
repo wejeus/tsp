@@ -35,7 +35,7 @@ Also, it's not feasible to construct this lower bound exactly for very large tou
 
 \section{Tour construction}
 
-As the given problem is NP-hard, computing an exact solution for the tour isn't really to hope for. Exact solutions for the travelling-salesman problem can be found with dynamic programming in $O(2^n)$ time with inclusion-exclusion (Karp 1982).
+As the given problem is NP-hard, computing an exact solution for the tour isn't really to hope for. Exact solutions for the travelling-salesman problem can be found with dynamic programming in $O(2^n)$ time with inclusion-exclusion\cite{exact}.
 
 This isn't usable for us, as we need to construct tours within polynomial time. Our approach will be to construct a tour ``quickly'' and attempt local optimizations. There are a few different we could use:
 
@@ -142,6 +142,9 @@ We'd recommend trying different initial tours as well, as greedy shown to be bet
 	Department of Computer Science, Roskilde University. \url{http://www.akira.ruc.dk/~keld/research/LKH/LKH-2.0/DOC/LKH_REPORT.pdf}
 \end{thebibliography}
 
+\bibitem{exact}
+	Richard M. Karp
+	\emph{Dynamic programming meets the principle of inclusion and exclusion}
+	Computer Science Division, University of California. \url{http://dx.doi.org/10.1016%2F0167-6377%2882%2990044-X}
 \end{document}
-
 
