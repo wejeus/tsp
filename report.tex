@@ -29,9 +29,9 @@ This report only touches the Euclidean TSP, some methods proposed may not be usa
 
 \section{Held-Karp Lower bound}
 
-As finding optimal results is very hard (so long as NP isn't within P), we can't expect to find optimal results within polynomial time. In order to measure how good an algorithm is, we can use a lower bound for a TSP tour which can be found in polynomial time. A common way of doing this is the Held-Karp (HK) lower bound. This bound seems to average about 0.8\% below the optimal tour length, but is only guaranteed to be within 2/3 of the optimal tour. 
+As finding optimal results is very hard (so long as NP isn't within P), we can't expect to find optimal results within polynomial time. In order to measure how good an algorithm is, we can use a lower bound for a TSP tour which can be found in polynomial time. This is done using the Held-Karp lower bound, which is the solution to the linear programming relaxation of the TSP, which can actually be computed in polynomial time\cite{bound}. This bound seems to average about 0.8\% below the optimal tour length, but is only guaranteed to be within 2/3 of the optimal tour. 
 
-Also, it's not feasible to construct this lower bound exactly for large tours, for which an iterative version, which keeps close to the HK bound, is proposed to be used instead. Both of these methods however were not of very great use to us, as we'd measure our algorithms directly on Kattis' data. It's noteworthy however, because it provides some kind of measure, and can in some way say how far a solution is from the actual one.
+Also, it's not feasible to construct this lower bound exactly for very large tours, for which an iterative version, which keeps close to the HK bound, has been proposed instead. Both versions of these methods however were however of very great use to us, as we'd measure our algorithms directly on Kattis' data. It's noteworthy however, because it provides some kind of measure, and can in some way say how far a solution could possibly be from the optimal one.
 
 \section{Tour construction}
 
@@ -51,11 +51,13 @@ From each city, checking distance to all neighbours is $O(n)$, as there are $n$ 
 
 \subsection{Greedy}
 
-Similar to Kruskal's MST algorithm, we try to insert the smallest edge possible into a tour. No node (or city) may ever be at the end of two edges or have two outgoing edges. We must also avoid creating a cycle with less than $n$ edges.
+Similar to Kruskal's MST algorithm, we try to include the smallest edge possible into our tour. No two edges may ever end in the same city, nor can any city have two outgoing edges. We must also avoid creating a cycle with less than $n$ edges, that is, only the final edge may close the tour.
 
 We sort the edges, and always select the shortest one, discarding ones which would violate above criterion. In order to avoid creating a cycle in the above construction, we use an union-find structure, to assert that the edges join two disjoint sets.
 
 Experimentally, we found the greedy algorithm to work better than nearest neighbour in some cases, and worse in other. We heard that this algorithm was supposed to perform better than nearest-neighbour, but when uploading to Kattis, our testing framework, this algorithm actually gave a worse result. This may be in conjunction with how we perform our local optimizations etc. This initial tour seems to make our algorithm stuck in a worse local maxima.
+
+Also, in our case, it seemed more beneficial to spend the extra computing time on more repeated iterations on a nearest-neighbour solution, than to compute a greedy solution first. This may be due to a flaw in our implementation, as others report a better progress with it.
 
 \subsection{Other tour construction algorithms}
 
@@ -68,24 +70,27 @@ Variants of Christofides' algorithms works by forming minimal spanning trees fro
 We don't know how these tour-construction algorithms are affected by the local-optimization algorithms, they could provide both a better, or worse, local maxima, depending on methods used.
 
 \section{Local optimization}
+
 After arguing how to find the best possible starting tour we now look at how this tour can be improved further. Methods used typically builds on techniques to reconstruct the tour by making path changes. The more popular methods is \textit{2OPT, 3OPT} and \textit{Lin-Kernighan}. Starting with the foremost, in 2OPT we try to find a better tour by successively testing if an exchange of two edges at a time would result in an improvement of tour cost, if so perform the exchange and continue with an other two pair of nodes.
 
-Regarding 3OPT and Lin-Kernighan, or LK for short, both can be seen as extensions of 2OPT - building on the same idea of edge exchange where in 3OPT you test three edges at a time and LK can be seen as a generalization to $n$ edges but the actual edges exchanged varies at each iteration.
+Regarding 3OPT and Lin-Kernighan, or LK for short, both can be seen as extensions of 2OPT - building on the same idea of edge exchange where in 3OPT you test three edges at a time and LK can be seen as a generalization to $k$ edges but the actual edges exchanged varies at each iteration. The running time for a 3OPT step is usually $O(n^3)$, unfeasible to run totally given our time restriction. Lin and Kernighan's variable $k$-opt algorithm is approximately $O(n^{2.2})$, and outperforms 3OPT easily\cite{lk}. In fact, LK seems to produce optimal results with impressively high frequency, though only being an approximation algorithm.
 
-The variation in how many edges are exchanged at one time gives the various techniques different characteristics, namely difference in running time and cost of total tour found. The difference in tour cost is obviously expected since they are all \textit{local} optimization techniques and no guarantee exists that any local improvement actually is a part of any global \textit{optimal} solution (side note: this is what we refer to by \textit{non-determenistic} in the introduction, see footnote 1).
+To speed up these steps, one can choose to only consider $k$ neighbours from each city, and restrict the search. Using this heuristic with $k=20$ we were able to cut running times some, without messing up the end results. Considering $k$ neighbours from each city gives 2OPT a run-time of $O(n*k)$, but results are no longer 2-optimal.
+
+The variation in how many edges are exchanged at one time gives the various techniques different characteristics, namely difference in running time and cost of total tour found. The difference in tour cost is obviously expected since they are all \textit{local} optimization techniques and no guarantee exists that any local improvement actually is a part of any global \textit{optimal} solution (side note: this is what we refer to by \textit{non-deterministic} in the introduction, see footnote 1).
 
 All three local optimization procedures given above have different aspects and properties that make the unique. From results given in \cite{localopt} we see that a higher running, on average, normally produces a better tour cost. As an example taken from \cite{localopt}, the difference in running time between LK and 2OPT on an input size of $10^6$ is 2650(LK) vs 940(2OPT) seconds and the average excess over Held-Karp lower bound is 2.0 vs 4.9 in favor of LK. But if running time is of more importance the higher tour cost might be acceptable. This shows that there is no clear definition of \textit{"best"} approach for local optimization instead its up to the needs of the context. 
 
-Most important to us we deemed to be time. This due to how the judging is structured on \textit{Kattis}\cite{kattis}. We sacrifice some improvement in tour cost to instead be able to run more test and in that way (hopefully) score more points. Our final choice was 2OPT.
+In our case, we had a time restriction that prevented us from running 3OPT, completely at least. Aside from 2OPT we ran an extension to it known as 2.5OPT, and each time new edges were swapped in, we attempted to insert another city in between them. This doesn't destroy time complexity, as the 2OPT step generating the 2 edges being swapped is far more expensive than these linear searches. 2.5OPT was fruitful and with it we managed to score a few more points relatively easy. In a final step, because this \emph{half-opt} technique is cheap enough, we iterated through all final edges, and attempted a to insert any city in between them, which was also fruitful.
 
 \subsection{Local maxima/minima}
 When performing a local optimization we need to start the procedure at some point. The choice of start point can pose an impact on the quality of the total tour. This is due to the fact that, depending on start point, it is possible for the algorithm used to hit different local maxima/minima in varied order which in turn can affect other local maxima/minima given various results.
 
 When referring to local maxima/minima we of course refer to the possible choice of exchanging edges. As an example a decision to exchange edge pair $x$ at time $T_0$ giving an intermediate result of $S$, now since our decision at $T_0$ we continue to $T_1$ \textit{with a reduced set of possible next action} due to the decision at $T_0$, if instead we would start at $T_1$ we would have a greater set of possible actions and, perhaps, one of those would give a result $\hat{S} > S$.
 
-A good start node would be one that avoids removing a local maxima/minima that would be a part of the optimal solution as a response of encountering some other maxima/minima. We where unable to find any theory to build or choice of "good" start node on and are highly doubtful that such a choice is possible due to the fact of NP-completeness of the TSP.
+A good start node would be one that avoids removing a local maxima/minima that would be a part of the optimal solution as a response of encountering some other maxima/minima. We were unable to find any theory to build or choice of "good" start node on and are highly doubtful that such a choice is possible due to the fact of NP-completeness of the TSP.
 
-We also note that the choice of initial start tour also could affect the end result using the same reasoning as above. Our solution was to do a local optimization several times, both by using different start points and by using different start tours (greedy and nearest neighbor) and then comparing the results.
+We also note that the choice of initial start tour also could affect the end result using the same reasoning as above. Our solution was to do a local optimization several times, by using different start points and then comparing the results.
 
 \subsection{Reversing edges}
 Using 2OPT algorithm we note that when two edges are exchanged (i.e a new connection between \textit{four} independent nodes is established) no matter how we create these new edges the result of the exchange will \textit{never} form a directed cycle. This is due to the fact that regardless of which edge we exchange for (and independently of direction) the result will always be exactly one node will have two edges directed towards it and exactly one node with two exiting edges, no other assignment is possible. See figure below for illustration, note the directions of edges.
@@ -126,6 +131,15 @@ We'd recommend trying different initial tours as well, as greedy shown to be bet
 	\emph{Travelling Salesperson 2D}
 	https://kth.kattis.scrool.se/problems/oldkattis:tsp
 
+\bibitem{bound}
+	D. S. Johnson, L. A. McGeoch, E. E. Rothberg
+	\emph{Asymptotic Experimental Analysis for the Held-Karp Traveling Salesman Bound}
+	Proceedings of the 7th Annual ACM-SIAM Symposium on Discrete Algorithms (1996), 341-350. http://public.research.att.com/~dsj/papers/HKsoda.pdf
+
+\bibitem{lk}
+	K. Helsgaun
+	\emph{An Effective Implementation of the Lin-Kernighan Traveling Salesman Heuristic}
+	Department of Computer Science, Roskilde University. \url{http://www.akira.ruc.dk/~keld/research/LKH/LKH-2.0/DOC/LKH_REPORT.pdf}
 \end{thebibliography}
 
 \end{document}
