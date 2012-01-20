@@ -1,6 +1,9 @@
 Tricky Solution to Problem, or tsp, is a solver for the Travelling Salesman
 Problem, or tsp, for the KTH course on Advanced Algorithms.
 
+Project contains a 2OPT solver written in C and a report describing the TSP 
+problem and its solution.
+
 Course home page: http://www.csc.kth.se/utbildning/kth/kurser/DD2440/
 2011 home page: http://www.csc.kth.se/utbildning/kth/kurser/DD2440/avalg11/
 
@@ -14,5 +17,4 @@ Possibly used implementation paper/sources:
 * http://isd.ktu.lt/it2011//material/Proceedings/1_AI_5.pdf
 * http://code.google.com/p/skidmore-vega/source/browse/trunk/VEGA/src/vega/algorithms/tsp/TwoOpt.java?spec=svn107&r=106
 
-TODO: Add description of algorithm used.
 
