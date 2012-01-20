@@ -27,4 +27,3 @@ clean:
 	rm -f report.aux report.log report.synctex.gz
 	
 
-# DO NOT DELETE
